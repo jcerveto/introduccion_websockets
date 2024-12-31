@@ -15,8 +15,8 @@ Para ejecutar el servidor, sigue estos pasos:
 
 1. Clona el repositorio:
     ```bash
-    git clone https://github.com/tu_usuario/tu_repositorio.git
-    cd tu_repositorio/backend
+    git clone https://github.com/jcerveto/introduccion_websockets.git
+    cd introduccion_websockets/backend
     ```
 
 2. Instala las dependencias:
