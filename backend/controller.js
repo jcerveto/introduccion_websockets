@@ -1,49 +1,33 @@
 import { Server } from 'socket.io';
-import { processConnection } from './service.js';
-
-const connectionQueue = [];
-let isProcessing = false;
+import { logicProcessing } from './service.js';
 
 export function websocketConnection(httpServer) {
-  
   const io = new Server(httpServer, {
     serveClient: false,
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"]
+    }
   });
 
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
-    connectionQueue.push(socket);
-    
-    if (!isProcessing) {
-      processNextInQueue();
-    }
+
+    // Move all event listeners inside the connection callback
+    socket.on('disconnect', () => {
+      console.log(`Client disconnected: ${socket.id}`);
+    });
+
+    socket.on('error', (error) => {
+      console.error('Error with client:', error);
+    });
+
+    socket.on('message', (message) => {
+      console.log(`Message received: ${message}`);
+      const response = logicProcessing(message);
+      console.log(`Sending response: ${response}`);
+      io.emit('message', response);  // Broadcast to all clients
+      // Or use socket.emit('message', response) to send only to the sender
+    });
   });
-
-  io.on('disconnect', (socket) => {
-    console.log(`Client disconnected: ${socket.id}`);
-  });
-
-  async function processNextInQueue() {
-    if (connectionQueue.length === 0) {
-      isProcessing = false;
-      return;
-    }
-
-    isProcessing = true;
-    const socket = connectionQueue.shift(); // FIFO implementation
-    
-    try {
-      await processConnection(socket);
-    } catch (error) {
-      window.alert("Error processing connection");
-      console.error(`Error processing connection ${socket.id}:`, error);
-    } finally {
-      // Ensure connection is closed after processing or error
-      if (socket.connected) {
-        socket.disconnect(true);
-      }
-      // Process next client in queue
-      processNextInQueue();
-    }
-  }
 }

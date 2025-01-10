@@ -63,7 +63,7 @@
         const messageInput = document.getElementById('messageInput');
         const connectionStatus = document.getElementById('connectionStatus');
 
-        // WebSocket event handlers
+        
         socket.on('connect', () => {
             connectionStatus.textContent = `Status: Connected (ID: ${socket.id})`;
             addMessage('Connected to server', 'status');
