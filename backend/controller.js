@@ -19,6 +19,10 @@ export function websocketConnection(httpServer) {
     }
   });
 
+  io.on('disconnect', (socket) => {
+    console.log(`Client disconnected: ${socket.id}`);
+  });
+
   async function processNextInQueue() {
     if (connectionQueue.length === 0) {
       isProcessing = false;
@@ -31,6 +35,7 @@ export function websocketConnection(httpServer) {
     try {
       await processConnection(socket);
     } catch (error) {
+      window.alert("Error processing connection");
       console.error(`Error processing connection ${socket.id}:`, error);
     } finally {
       // Ensure connection is closed after processing or error

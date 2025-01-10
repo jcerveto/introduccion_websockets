@@ -3,111 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Queue Client</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Socket.IO client -->
+    <title>WebSocket Client</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        #messageForm {
+            display: flex;
+            gap: 10px;
+        }
+        #messageInput {
+            flex: 1;
+            padding: 5px;
+        }
+        .status {
+            color: #666;
+            font-style: italic;
+        }
+        .received {
+            color: blue;
+        }
+        .sent {
+            color: green;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <div class="card">
-            <div class="card-body">
-                <h2 class="card-title mb-4">WebSocket Queue Client</h2>
-                
-                <div id="statusLabel" class="alert alert-danger">Status: Disconnected</div>
-                <div id="countdown" class="text-end fw-bold mb-3"></div>
-                
-                <div class="mb-3">
-                    <div class="input-group">
-                        <input type="text" id="messageInput" class="form-control" placeholder="Type your message here" disabled>
-                        <button id="sendButton" class="btn btn-primary" disabled>Send Message</button>
-                    </div>
-                </div>
-                
-                <div>
-                    <strong>Server Response:</strong>
-                    <div id="response" class="alert alert-light mt-2"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <h1>WebSocket Client</h1>
+    <div id="connectionStatus">Status: Disconnected</div>
+    <div id="messages"></div>
+    <form id="messageForm">
+        <input type="text" id="messageInput" placeholder="Type your message...">
+        <button type="submit">Send</button>
+    </form>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
-    
+    <button id="buttonConnect">Connect</button> 
+
     <script>
+        // Connect to the WebSocket server
         const socket = io('http://localhost:3000', {
             transports: ['websocket'],
-            cors: {
-                origin: "http://localhost:3000",
-                methods: ["GET", "POST"]
-            }
+            autoConnect: false 
         });
-
-        const statusLabel = document.getElementById('statusLabel');
+        
+        // DOM elements
+        const messagesDiv = document.getElementById('messages');
+        const messageForm = document.getElementById('messageForm');
         const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const responseDiv = document.getElementById('response');
-        const countdownDiv = document.getElementById('countdown');
+        const connectionStatus = document.getElementById('connectionStatus');
 
-        function updateStatus(connected) {
-            statusLabel.textContent = `Status: ${connected ? 'Connected' : 'Disconnected'}`;
-            statusLabel.className = `alert ${connected ? 'alert-success' : 'alert-danger'}`;
-            messageInput.disabled = !connected;
-            sendButton.disabled = !connected;
-        }
-
-        function startCountdown(seconds) {
-            let timeLeft = seconds;
-            countdownDiv.textContent = `Time remaining: ${timeLeft}s`;
-            
-            const countdownInterval = setInterval(() => {
-                timeLeft--;
-                countdownDiv.textContent = `Time remaining: ${timeLeft}s`;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                }
-            }, 1000);
-
-            // Clear interval on disconnect
-            socket.on('disconnect', () => clearInterval(countdownInterval));
-        }
-
+        // WebSocket event handlers
         socket.on('connect', () => {
-            console.log('Connected to server');
-            updateStatus(true);
-            startCountdown(30);
-        });
-
-        socket.on('connect_error', (error) => {
-            console.error('Connection error:', error);
-            updateStatus(false);
+            connectionStatus.textContent = `Status: Connected (ID: ${socket.id})`;
+            addMessage('Connected to server', 'status');
         });
 
         socket.on('disconnect', () => {
-            console.log('Disconnected from server');
-            updateStatus(false);
-            countdownDiv.textContent = '';
+            connectionStatus.textContent = 'Status: Disconnected';
+            addMessage('Disconnected from server', 'status');
         });
 
+        socket.on('error', (error) => {
+            addMessage(`Error: ${error}`, 'status');
+        });
+
+        // custom event handlers
         socket.on('message', (msg) => {
-            responseDiv.textContent = msg;
+            addMessage(`Received: ${msg}`, 'received');
         });
 
-        sendButton.addEventListener('click', () => {
+        messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
             const message = messageInput.value.trim();
             if (message) {
                 socket.emit('message', message);
+                addMessage(`Sent: ${message}`, 'sent');
                 messageInput.value = '';
             }
         });
 
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendButton.click();
-            }
+        function addMessage(message, type) {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            messageElement.classList.add(type);
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        document.getElementById('buttonConnect').addEventListener('click', () => {
+            socket.connect();
         });
+        
     </script>
 </body>
 </html>
