@@ -1,6 +1,6 @@
 # WebSockets Demo
 
-[![Nuestro video explicando el repositorio](https://youtu.be/r0A8pXuZo_0)]([https://www.youtube.com/watch?v=VIDEO_ID](https://youtu.be/r0A8pXuZo_0))
+[![Nuestro video explicando el repositorio](https://img.youtube.com/vi/r0A8pXuZo_0/0.jpg)](https://youtu.be/r0A8pXuZo_0)
 
 
 *Nuestro video de YouTube explicando el repositorio*
